@@ -5,10 +5,11 @@ from fmActor import create_actor
 import constants as S
 import wcTerminalIO as T
 
-flag_list = list((S.MODE_ADD, S.MODE_SET, S.MODE_CHANGE, S.MODE_REMOVE, S.MODE_TOTAL, S.MODE_HELP))
-flags = wcutil.FlagFarm(flag_list)
-debug = wcutil.Debug(active=True)
-dbg = debug.scribe
+flag_list = None
+flags = None
+debug = None
+dbg = None
+
 class CommandLineInformation:
     def __init__(self):
         self.success = False
@@ -147,18 +148,27 @@ def decipher_command_line(arguments, flags):
     cl.success = True
     return cl
 
-cl = decipher_command_line(sys.argv, flags)
-if not cl.success:
-    show_error(cl.error)
-    exit(1)
-if cl.type == S.MODE_HELP:
-    show_help()
-    exit(0)
-if cl.type == S.MODE_MENU:
-    show_interactive()
-    exit(0)
-else:
-    actor = create_actor(cl.directory, cl.property_text, cl.type)
-    actor.run()
-    if cl.type == S.MODE_TOTAL:
-        print(actor.summary)
+def _main(args):
+    flag_list = list((S.MODE_ADD, S.MODE_SET, S.MODE_CHANGE, S.MODE_REMOVE, S.MODE_TOTAL, S.MODE_HELP))
+    flags = wcutil.FlagFarm(flag_list)
+    debug = wcutil.Debug(active=True)
+    dbg = debug.scribe
+
+    cl = decipher_command_line(args, flags)
+    if not cl.success:
+        show_error(cl.error)
+        exit(1)
+    if cl.type == S.MODE_HELP:
+        show_help()
+        exit(0)
+    if cl.type == S.MODE_MENU:
+        show_interactive()
+        exit(0)
+    else:
+        actor = create_actor(cl.directory, cl.property_text, cl.type)
+        actor.run()
+        if cl.type == S.MODE_TOTAL:
+            print(actor.summary)
+
+if __name__ == "__main__":
+    _main(sys.argv)
