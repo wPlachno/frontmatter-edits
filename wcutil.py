@@ -174,13 +174,17 @@ class FlagFarm:
 
 class WoodChipperFile:
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, auto_create=True):
         self.path = pathlib.Path(file_path)
         self.name = self.path.name
         self.text = list(())
-        if not self.path.exists():
+
+        if auto_create and not self.path.exists():
             file = open(self.path, 'x')
             file.close()
+
+    def exists(self):
+        return self.path.exists()
 
     def read(self):
         with (open(self.path, "r")
