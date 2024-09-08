@@ -1,6 +1,7 @@
 """
 wcutil.py
 Created by Will Plachno on 11/30/23
+Version 0.0.0.1
 
 Woodchipper Utilities
 An assortment of helpful functions and classes.
@@ -202,7 +203,7 @@ class WoodChipperFile:
                 text_file.write(text_line)
 
     def clear(self):
-        self.text = list (())
+        self.text.clear()
 
     def append_line(self, text):
         fixed_text = text
@@ -228,6 +229,42 @@ class WoodChipperFile:
     def __str__(self):
         return self.name + " (" + self.path + "): " + len(self.text) + " items"
 
+class WoodchipperListFile(WoodChipperFile):
+    def __init__(self, file_path, auto_create=True, unique=True):
+        WoodChipperFile.__init__(self, file_path, auto_create)
+        self.unique = unique
+
+    def __getitem__(self, item):
+        return self.text[item][:-1]
+
+    def __setitem__(self, key, value):
+        self.text[key] = str(value) + "\n"
+
+    def  __contains__(self, item):
+        text = str(item)+'\n'
+        return text in self.text
+
+    def __len__(self):
+        return len(self.text)
+
+    def __str__(self):
+        text = ""
+        for line in self.text:
+            text = text + (line[:-1]+', ')
+        return text[:-2]
+
+    def add(self, value):
+        text = str(value)+'\n'
+        if (not self.unique) or (text not in self.text):
+            self.text.append(text)
+            return True
+        return False
+
+    def remove(self, value):
+        text = str(value)+'\n'
+        found = text in self.text
+        self.text.remove(text)
+        return found
 
 class WoodchipperSettingsFile:
     def __init__(self):
