@@ -24,8 +24,12 @@ Includes:
 - -- bool2Str: Converts a bool into either "on" or "off". Passing
         true will wrap the string in a terminal color code, on as
         green, off as red.
+- -- convert_to_array: Takes whatever is passed in an wraps it in
+        a list if it wasn't already a list.
 - -- decipher_command_line_arguments: Given a list of strings, this
         function checks the list for the flags of a flag farm.
+- -- process_str_array_new_lines: Given a list of strings, breaks
+        up any strings with new lines into two strings.
 - -- run_on_sorted_list: Sorts a list and then runs on each item
         a given function.
 - -- str2Bool: Converts a string to a boolean, defaulting to false,
@@ -302,6 +306,16 @@ def bool_from_user(raw_text:str):
         return True
     return False
 
+def convert_to_array(target):
+    """
+    Takes whatever is passed in and returns it inside
+    of a list, unless it was already a list.
+    :param target: anything
+    :return: target inside a list or target if target is already a list.
+    """
+    if target.__class__ is list:
+        return target
+    return [target]
 
 def decipher_command_line(arguments, flags: FlagFarm):
     """
@@ -319,17 +333,6 @@ def decipher_command_line(arguments, flags: FlagFarm):
         else:
             targets.append(cl_argument)
     return targets
-
-def convert_to_array(target):
-    """
-    Takes whatever is passed in and returns it inside
-    of a list, unless it was already a list.
-    :param target: anything
-    :return: target inside a list or target if target is already a list.
-    """
-    if target.__class__ is list:
-        return target
-    return [target]
 
 def process_str_array_new_lines(target):
     """
