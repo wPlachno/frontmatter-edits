@@ -1,6 +1,6 @@
 import pathlib
 
-import wcutil
+from utilities import wcutil
 from fmFile import FrontMatterFile
 from fmProperty import FrontMatterProperty
 import constants as S

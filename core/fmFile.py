@@ -1,7 +1,4 @@
-import pathlib
-
-import wcutil
-from wcutil import WoodChipperFile
+from utilities.wcutil import WoodChipperFile
 from fmProperty import FrontMatterProperty
 import constants as S
 

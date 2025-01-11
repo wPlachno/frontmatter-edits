@@ -1,6 +1,6 @@
 import sys
 import pathlib
-import wcutil
+from utilities import wcutil
 from core.fmActor import create_actor
 import constants as S
 from interface import wcTerminalIO as T
