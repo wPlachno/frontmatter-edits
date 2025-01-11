@@ -1,7 +1,8 @@
 """
 wcutil.py
 Created by Will Plachno on 11/30/23
-Version 0.0.0.1
+Version: 0.0.1.011
+Last Changes: 01/08/2025
 
 Woodchipper Utilities
 An assortment of helpful functions and classes.
@@ -15,17 +16,11 @@ Includes:
         file into an array.
 - -- WoodchipperSettingsFile: A class for handling a settings file.
 
-- Globals:_________________________________________________________
-- -- onSynonyms: A list of synonyms for true to be used when trying
-        to decipher strings using str2Bool()
-- -- preferred_time_format: Our standard preferred time format as
-        a string.
-
 - Functions:_______________________________________________________
 - -- bool2Str: Converts a bool into either "on" or "off". Passing
         true will wrap the string in a terminal color code, on as
         green, off as red.
-- -- convert_to_array: Takes whatever is passed in an wraps it in
+- -- convert_to_array: Takes whatever is passed in and wraps it in
         a list if it wasn't already a list.
 - -- decipher_command_line_arguments: Given a list of strings, this
         function checks the list for the flags of a flag farm.
@@ -44,9 +39,56 @@ Includes:
         format.
 - -- valid_directory_at: Returns whether the path is a directory,
         safely defaulting to False.
+
+Wishlist:
+- -- WoodchipperFile: Allow for usage of the wcf as an array of
+        lines, add two functions which strip or add new lines,
+        and add map-filter-reduce functions. As a reminder:
+        Map - transforms a collection item by item, returning
+            the transformations as a separate collection
+        Filter - Runs a function on each item of a collection,
+            creating a new collection of items for which the
+            function returns true.
+        Reduce - Returns a sum of the return values of a functin
+            run over each item in a collection.
+- -- WoodchipperProfileFile: A WoodchipperSettingsFile specifically
+        for user account settings across different programs. Also,
+        separate it out and leave WoodchipperSettingsFile for a
+        simple, non-biased settings file.
+- -- Woodchipper_General.py: A catch-all file for random funcs and
+        such. Go ahead and move everything from wcutil.py to this,
+        then import into wcutil.py as Utility
+- -- Woodchipper_TerminalIO.py: A separate file to which we can
+        push the terminal printing stuff and the color consts.
+        Should still be imported by wcutil as Display. Use the
+        file frontmat/WCTerminalIO.py as a starter.
+- -- Woodchipper_FlagFarm.py: A separate file to which we can move
+        the FlagFarm class and any required functions.
+- -- Woodchipper_Strings.py: A separate file to which we can move
+        all string functionality, including str2Bool, bool2Str,
+        process_str_array_new_lines, text_has_paths, and
+        tail_matches_token.
+- -- Woodchipper_FileIO.py: A separate file to which we can move
+        the generic file i/o functionality - WoodchipperFile,
+        WoodchipperSettingsFile
+- -- Woodchipper_Debug.py: A separate file to which we can move
+        the Debug class and any functions it relies on.
+- -- Woodchipper_Profile.py: A separate file to which we can move
+        an all-in-one solution: a WoodchipperProfileFile, easy
+        Debug, and can easily be plugged into whatever cli parser
+        your solution uses.
+- -- Woodchipper_Constants.py: A separate file to which we can move
+        A way to compile a bunch of widely used constants with a
+        constants file, constants.txt in the same folder. We can use
+        WoodchipperSettingsFile, then use setattr to load it into a
+        Constants object.
+
 """
 import pathlib
 from datetime import datetime
+from types import SimpleNamespace
+
+import utilities.wcconstants as S
 
 """ CLASSES ------------------------------------------------------ """
 
@@ -176,7 +218,122 @@ class FlagFarm:
     def has_flag(self, key):
         return key in self.keys
 
+class WoodchipperNamespace(SimpleNamespace):
+    def __init__(self, name=None):
+        SimpleNamespace.__init__(self)
+        self._name = name if name else "WoodchipperNamespace"
 
+    def add(self, key, value):
+        setattr(self, key, value)
+
+    def __str__(self):
+        out_str = S.clr(self._name, S.COLOR.SUPER) + ": { "
+        if len(self.__dict__) > 0:
+            for key in self.__dict__:
+                if key != "_name":
+                    value_str = str(self.__dict__[key]).replace("\n", "\n\t")
+                    out_str += f"\n\t{S.clr(key, S.COLOR.SIBLING)}: {value_str}"
+            out_str += "\n"
+        out_str += "}"
+        return out_str
+
+class WoodchipperDictionary:
+    def __init__(self, default_value=None):
+        self.values = dict()
+        self.default = default_value
+        self.values["default"] = self.default
+
+    def __getitem__(self, key="default"):
+        try:
+            return self.values[key]
+        except KeyError:
+            return self.default
+
+    def __setitem__(self, key, value):
+        if key.lower() == "default":
+            self.default = value
+        self.values[key] = value
+
+    def __iter__(self):
+        class WoodchipperDictionaryIterator:
+            def __init__(self, wcdict):
+                self.dict = wcdict
+                self.keys = list(wcdict.values.keys())
+                self.length = len(self.keys)
+                self.index = -1
+                self.key = None
+                self.value = None
+                if not self.find_next():
+                    raise StopIteration
+
+            def __next__(self):
+                if not self.find_next():
+                    raise StopIteration
+                return self.value
+
+            def find_next(self):
+                self.index += 1
+                if self.index > self.length:
+                    return False
+                elif self.index == self.length:
+                    self.set("default")
+                    return True
+                else:
+                    key = self.keys[self.index]
+                    if key == "default":
+                        return self.find_next()
+                    else:
+                        self.set(key)
+                        return True
+
+            def set(self, key):
+                self.key = key
+                self.value = self.dict[self.key]
+        return WoodchipperDictionaryIterator(self)
+
+
+
+""" WoodchipperFile
+#
+#       This class is a lightweight wrapper for common file functions,
+#   particularly making the read/write more atomic; using this class
+#   guarantees that logic is not being done while the file is actually
+#   open. We read the file into memory, free it up, do any logic, then
+#   call the write function to save it back to the file. 
+#
+### Usage
+#
+#       When using WoodchipperFile objects, you pass the path into the
+#   initialization of the object, then call read() to pull the file
+#   contents as a list into wcf.text, do whatever you need with the 
+#   lists, then save the changes by calling write().
+#       Note that all lines of text end in a new line character. 
+#
+### Methods
+#
+#   # Attribute Controls
+#   exists() - checks whether the file exists
+#
+#   # Core
+#   read() - Pulls the contents from the file into the text member
+#   write() - Saves the current list into the file.
+#
+#   # File Editing
+#   append_line(text) - Adds a line of text at the end of the file.
+#   clear() - Clears the in memory text list.
+#   insert_line(index, text) - Inserts a line of text at the index,
+#       pushing any later lines 1 index higher, including the text
+#       previously at the index this new line gets added at. 
+#   run_per_line(_func) - Runs the _func callable on each line of 
+#       the file after removing the new line from each. The _func
+#       callable is expected to return a boolean. The run_per_line
+#       function which also returns a boolean, will only return 
+#       true if every call to _func returned true.
+#
+#   # Auxiliary
+#   __str__ - returns a string with the file name, file path, 
+#       and the number of lines in the file.
+"""
 class WoodChipperFile:
 
     def __init__(self, file_path, auto_create=True):
@@ -185,19 +342,16 @@ class WoodChipperFile:
         self.text = list(())
 
         if auto_create and not self.path.exists():
-            file = open(self.path, 'x')
+            file = open(self.path, S.FILE_IO.EXCLUSIVE_CREATION)
             file.close()
 
-    def exists(self):
-        return self.path.exists()
-
     def read(self):
-        with (open(self.path, "r")
+        with (open(self.path, S.FILE_IO.READ)
               as text_file):
             self.text = list(text_file)
 
     def write(self):
-        with (open(self.path, "w")
+        with (open(self.path, S.FILE_IO.WRITE)
               as text_file):
             for text_line in self.text:
                 text_file.write(text_line)
@@ -205,30 +359,80 @@ class WoodChipperFile:
     def clear(self):
         self.text.clear()
 
+    def exists(self):
+        return self.path.exists()
+
+    def last_modified(self):
+        return pathlib.Path(self.path).stat().st_mtime if self.exists() else 0
+
+    def file_extension(self):
+        return self.path.split('.')[-1]
+
+    def copy_from(self, other_file):
+        if other_file.text:
+            self.text = list(other_file.text)
+
     def append_line(self, text):
         fixed_text = text
-        if fixed_text[-1] != '\n':
-            fixed_text = fixed_text + '\n'
+        if fixed_text[-1] != S.KEY.NL:
+            fixed_text = fixed_text + S.KEY.NL
         self.text.append(fixed_text)
 
     def insert_line(self, index, text):
         fixed_text = text
-        if fixed_text[-1] != '\n':
-            fixed_text = fixed_text + '\n'
+        if fixed_text[-1] != S.KEY.NL:
+            fixed_text = fixed_text + S.KEY.NL
         self.text.insert(index, fixed_text)
 
     def run_per_line(self, _func):
         return_value = True
         for rawLine in self.text:
             line = rawLine
-            if line[-1] == '\n':
+            if line[-1] == S.KEY.NL:
                 line = line[:-1]
             return_value = return_value and _func(line)
         return return_value
 
-    def __str__(self):
-        return self.name + " (" + self.path + "): " + len(self.text) + " items"
+    def find_tag(self, tag):
+        for line in self.text:
+            if tag in line.lower():
+                start_idx = line.lower().find(tag) + len(tag)
+                tag_value = line[start_idx:].split()[0]
+                return tag_value
+        return "None"
 
+    def replace_tag(self, tag, value, add_if_not_found_at_line=-1):
+        found = False
+        for index in range(0, len(self.text)):
+            line = self.text[index]
+            if tag in line.lower():
+                start_idx = line.lower().find(tag) + len(tag)
+                self.text[index] = line[:start_idx] + value + '\n'
+                return index
+        if found == False and add_if_not_found_at_line != -1:
+            line_prefix = '#'
+            line_suffix = ''
+            line_str = f"{line_prefix} {tag}{value} {line_suffix}\n"
+            self.text.insert(add_if_not_found_at_line, line_str)
+            return add_if_not_found_at_line
+        return -1
+
+    def __str__(self):
+        return f"{self.name} ({self.path}): {len(self.text)} lines"
+
+
+""" WoodchipperListFile
+#
+#       A version of WoodchipperFile for serializing a set of items,
+#   where the order does not matter.
+#
+### Usage
+#
+#       Use this like the WoodchipperFile, but keep in mind that each
+#   line is intended to be unique if wcf.unique is true. 
+#
+### Methods
+"""
 class WoodchipperListFile(WoodChipperFile):
     def __init__(self, file_path, auto_create=True, unique=True):
         WoodChipperFile.__init__(self, file_path, auto_create)
@@ -238,37 +442,52 @@ class WoodchipperListFile(WoodChipperFile):
         return self.text[item][:-1]
 
     def __setitem__(self, key, value):
-        self.text[key] = str(value) + "\n"
+        self.text[key] = str(value) + S.KEY.NL
 
     def  __contains__(self, item):
-        text = str(item)+'\n'
+        text = str(item)+S.KEY.NL
         return text in self.text
 
     def __len__(self):
         return len(self.text)
 
     def __str__(self):
-        text = ""
+        text = S.KEY.EMPTY
         for line in self.text:
-            text = text + (line[:-1]+', ')
+            text = text + (line[:-1]+S.KEY.CD)
         return text[:-2]
 
     def add(self, value):
-        text = str(value)+'\n'
+        text = str(value)+S.KEY.NL
         if (not self.unique) or (text not in self.text):
             self.text.append(text)
             return True
         return False
 
     def remove(self, value):
-        text = str(value)+'\n'
+        text = str(value)+S.KEY.NL
         found = text in self.text
         self.text.remove(text)
         return found
 
-class WoodchipperSettingsFile:
-    def __init__(self):
-        self.path = pathlib.Path.home() / ".wcp_Settings.txt"
+
+""" WoodchipperSettingsFile
+#
+#       A version of WoodchipperFile for serializing a set of items,
+#   where the order does not matter.
+#
+### Usage
+#
+#       Use this like the WoodchipperFile, but keep in mind that each
+#   line is intended to be unique if wcf.unique is true. 
+#
+### Methods
+"""
+class WoodchipperDictionaryFile:
+    def __init__(self, path="None"):
+        self.path = path
+        if self.path == "None":
+            self.path = pathlib.Path.home() / S.FILE_NAME_SETTINGS
         self.file = WoodChipperFile(self.path)
         self.keys = set(())
         self.values = {}
@@ -276,48 +495,52 @@ class WoodchipperSettingsFile:
     def load(self):
         self.file.read()
         self.file.run_per_line(self._add_from_file)
-        if "debug" not in self.keys:
-            self.set_key("debug","off")
+        if S.DEBUG not in self.keys:
+            self.set_key(S.DEBUG,S.OFF)
 
     def save(self):
         self.file.clear()
         for key in self.keys:
-            self.file.append_line(key+":"+self.values[key])
+            self.file.append_line(key+S.KEY.SDL+self.values[key])
         self.file.write()
 
 
     def __getitem__(self, item):
-        return self.values[item]
+        try:
+            return self.values[item]
+        except KeyError:
+            return None
 
     def __setitem__(self, key, value):
         self.set_key(key,value)
 
-    def set_key(self, key, value):
+    def __str__(self):
+        out_string = "{ "
+        for key in self.keys:
+            out_string += f"{key}: {self.values[key]}, "
+        out_string = out_string[:-2] + " }"
+        return out_string
+
+    def set_key(self, key, value, auto_save=False):
         self.keys.add(key)
         self.values[key] = value
+        if auto_save:
+            self.save()
 
     def get_key(self, key):
         return self.values[key]
 
     def _add_from_file(self, text):
-        linePieces = text.split(':')
-        self.set_key(linePieces[0], linePieces[1])
+        brokenLine = text.split(S.KEY.SDL)
+        _key = brokenLine[0]
+        _val = brokenLine[1]
+        self.set_key(_key, _val)
         return True
-
-    def get_debug(self):
-        return self["debug"] == "on"
-
-    def flip_debug(self):
-        debug = self["debug"]
-        if debug == "off":
-            self["debug"] = "on"
-        else:
-            self["debug"] = "off"
 
     def is_defined(self, key):
         return key in self.keys
 
-    def get_or_default(self, key, default="undefined"):
+    def get_or_default(self, key, default=S.UNDEFINED):
         if self.is_defined(key):
             return self[key]
         else:
@@ -325,21 +548,106 @@ class WoodchipperSettingsFile:
             self.save()
 
 
-""" GLOBALS ------------------------------------------------------ """
+""" WoodchipperSettingsFile
+#
+#       A global settings file across all Woodchipper scripts
+#
+### Usage
+#
+#       Use this like the WoodchipperFile, but keep in mind that each
+#   line is intended to be unique if wcf.unique is true. 
+#
+### Methods
+"""
+class WoodchipperSettingsFile(WoodchipperDictionaryFile):
+    def __init__(self):
+        WoodchipperDictionaryFile.__init__(self)
+        self.load()
+        self._check_variables()
+        self.verbosity = int(self[S.VERBOSE])
 
+    def _check_variables(self):
+        any_missing = False
+        profile_vars = [ (S.VERBOSE, str(S.Verbosity.NORMAL)) ]
+        for var_key, var_val in profile_vars:
+            if not var_key in self.keys:
+                any_missing = True
+                self.set_key(var_key, var_val)
+        if any_missing:
+            self.save()
+        return any_missing
 
-onSynonyms = list(("on", "true", "1", "yes",
-                   "t", "y", "+", "active",
-                   "positive", "a", "p"))
-preferred_time_format = "%m%d%y:%H:%M:%S"
+    def get_debug(self):
+        return self[S.DEBUG] == S.ON
+
+    def flip_debug(self, wanted_value=None):
+        new_value = wanted_value
+        value_string = self[S.DEBUG]
+        if wanted_value:
+            value_string = (S.OFF if wanted_value == False else S.ON)
+        else:
+            if value_string == S.OFF:
+                value_string = S.ON
+            else:
+                value_string = S.OFF
+        self.set_key(S.DEBUG, value_string, True)
+        return new_value
+
+    def get_verbosity(self):
+        return self.verbosity
+
+    def set_verbosity(self, wanted_value):
+        self.verbosity = wanted_value
+        self[S.VERBOSE] = str(self.verbosity)
+
+    def check_parser(self, argparse_args):
+        proceed = not argparse_args.config
+        test = None
+        out_string = None
+        if not argparse_args.verbosity is None:
+            verbosity = int_from_string(argparse_args.verbosity)
+            if verbosity is not None:
+                self.set_verbosity(verbosity)
+            else:
+                out_string = S.CL_TASK.CONFIG_ERROR.format("Verbosity could not be interpreted as an integer value.")
+        if not argparse_args.debug is None:
+            debug = argparse_args.debug
+            self.flip_debug(wanted_value=debug)
+        if not argparse_args.test is None:
+            test = argparse_args.test
+            # Note: We can test WCUTIL here by checking test, doing the test, and returning the result
+            # Otherwise, we can assume they are testing something outside of WCUTIL
+            proceed = False
+        self.save()
+        argparse_args.verbosity = self.verbosity
+        argparse_args.debug = self.get_debug()
+        if not out_string:
+            out_string = S.CL_TASK.MODE_CONFIG.format(S.VERBOSE, argparse_args.verbosity)
+            out_string += S.CL_TASK.MODE_CONFIG.format(S.DEBUG, argparse_args.debug)
+        return proceed, out_string, test
+
+    @staticmethod
+    def setup_argparse_parser_with_config(parser):
+        parser.add_argument("-c", "--config", default=False, hide=True)
+        parser.add_argument("--verbosity", shaper=int_from_string, nargs=1)
+        parser.add_argument("-d", "--debug", shaper=bool_from_user, nargs=1)
+        parser.add_argument("--test", nargs=1)
+
+    @staticmethod
+    def get_test_string(text):
+        if text.startswith(S.TEST_TAG):
+            return text[len(S.TEST_TAG):]
+        return None
+
+    def print(self, text, verbosity=S.Verbosity.NORMAL):
+        if self.get_debug() or self.verbosity >= verbosity:
+            print(text)
 
 
 """ FUNCTIONS ---------------------------------------------------- """
-
-
 def bool_from_user(raw_text:str):
     text = raw_text.lower()
-    if text in onSynonyms:
+    if text in S.ON_SYNONYMS:
         return True
     return False
 
@@ -371,6 +679,12 @@ def decipher_command_line(arguments, flags: FlagFarm):
             targets.append(cl_argument)
     return targets
 
+def int_from_string(text):
+    try:
+        return int(text)
+    except (TypeError, ValueError):
+        return None
+
 def process_str_array_new_lines(target):
     """
     Given a list of strings, breaks up each new line
@@ -378,12 +692,12 @@ def process_str_array_new_lines(target):
     :param target: A list of strings
     :return: a list of more strings with no new lines
     """
-    newLines = list(())
+    new_lines = list(())
     for _string in target:
-        for line in _string.split('\n'):
+        for line in _string.split(S.KEY.NL):
             if len(line) > 0:
-                newLines.append(line)
-    return newLines
+                new_lines.append(line)
+    return new_lines
 
 
 def run_on_sorted_list(target_list, function_given_item):
@@ -399,9 +713,9 @@ def run_on_sorted_list(target_list, function_given_item):
 
 
 def string_from_bool(value:bool, include_color:bool=False):
-    pretext = '\033[0;32m' if value else '\033[0;31m'
-    text = "on" if value else "off"
-    return pretext+text+'\033[0m' if include_color else text
+    pretext = S.COLOR.ACTIVE if value else S.COLOR.CANCEL
+    text = S.ON if value else S.OFF
+    return pretext+text+S.COLOR.DEFAULT if include_color else text
 
 
 def tail_matches_token(text, token):
@@ -418,11 +732,11 @@ def text_has_paths(text):
     """
     has_paths = False
     try:
-        text.index('/')
+        text.index(S.KEY.FS)
         has_paths = True
     finally:
         try:
-            text.index('\\')
+            text.index(S.KEY.BS)
             has_paths = True
         finally:
             return has_paths
@@ -435,8 +749,8 @@ def time_stamp(time=None):
     but the current time.
     """
     if time:
-        return datetime(time).strftime(preferred_time_format)
-    return datetime.now().strftime(preferred_time_format)
+        return datetime(time).strftime(S.PREFERRED_TIME_FORMAT)
+    return datetime.now().strftime(S.PREFERRED_TIME_FORMAT)
 
 
 def valid_directory_at(directory_path):
