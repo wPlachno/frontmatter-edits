@@ -1,9 +1,9 @@
 import sys
 import pathlib
 import wcutil
-from fmActor import create_actor
+from core.fmActor import create_actor
 import constants as S
-import wcTerminalIO as T
+from interface import wcTerminalIO as T
 
 flag_list = None
 flags = None
