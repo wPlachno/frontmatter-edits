@@ -1,3 +1,8 @@
+# fm_file.py
+# Created: 8/22/24 by Will Plachno
+# Version: 0.0.2.001
+# Last Changed: 01/11/2025
+
 from utilities.wcutil import WoodChipperFile
 from fm_property import FrontMatterProperty
 import constants as S
@@ -8,39 +13,58 @@ class FrontMatterFile(WoodChipperFile):
     def __init__(self, file_path):
         WoodChipperFile.__init__(self,file_path)
         self.properties = list(())
+        # properties_start = index of first attribute
         self.properties_start = -1
+        # properties_end = index of second frontmatter token.
         self.properties_end = -1
 
     def read(self):
         WoodChipperFile.read(self)
-        self._find_properties()
-
-    def _find_properties(self):
-        front_matter_indices = [index for index, line in enumerate(self.text) if S.FM_TOKEN in line]
-        if len(front_matter_indices) < 2:
-            self.text.insert(0, S.FM_LINE)
-            self.text.insert(0, S.FM_LINE)
-            front_matter_indices = list((0,1))
-        self.properties_start = front_matter_indices[0]+1
-        self.properties_end = front_matter_indices[1]
+        self._find_frontmatter_tokens()
         for line in self.text[self.properties_start:self.properties_end]:
             if len(line) > 3:
                 self.properties.append(FrontMatterProperty(line))
+
+    def _find_frontmatter_tokens(self, add_if_missing=True):
+        """
+        Finds and records the indices of the start and end frontmatter tokens
+        in the file. These tokens are expected to consist of three quotation
+        marks with nothing else in that line of text.
+        :param add_if_missing: Whether we should add the tokens to the file
+        if they are missing, or just raise an exception.
+        :return: No return value, but will change the properties_start and
+        properties_end
+        """
+        # Grab the indices of lines with the frontmatter token.
+        front_matter_indices = [index for index, line in enumerate(self.text) if S.FM_TOKEN in line]
+        if len(front_matter_indices) < 2:
+            if add_if_missing:
+                self.text.insert(0, S.FM_LINE)
+                self.text.insert(0, S.FM_LINE)
+                front_matter_indices = list((0,1))
+            else:
+                raise Exception(f"No frontmatter detected in {self.name}")
+        self.properties_start = front_matter_indices[0]+1
+        self.properties_end = front_matter_indices[1]
+
 
     def write(self):
         self.set_properties()
         WoodChipperFile.write(self)
 
     def set_properties(self):
+        # Check if the amount of properties has changed
         text_property_length = self.properties_end - self.properties_start
         number_added = len(self.properties) - text_property_length
         target_index = 0
+        # Save each attribute by either modifying the line or adding one.
         for index, prop_item in enumerate(self.properties):
             target_index = index+self.properties_start
             if index < text_property_length:
                 self.text[target_index] = prop_item.as_line()
             else:
                 self.text.insert(target_index, prop_item.as_line())
+        # Remove any extraneous lines
         if number_added < 0:
             target_index = target_index+1
             to_be_removed = number_added
