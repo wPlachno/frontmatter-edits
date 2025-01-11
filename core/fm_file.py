@@ -8,113 +8,110 @@ from fm_property import FrontMatterProperty
 import constants as S
 
 
-class FrontMatterFile(WoodChipperFile):
+class WoodchipperObsidianFile():
 
     def __init__(self, file_path):
-        WoodChipperFile.__init__(self,file_path)
+        self.file = WoodChipperFile(file_path)
         self.properties = list(())
-        # properties_start = index of first attribute
-        self.properties_start = -1
-        # properties_end = index of second frontmatter token.
-        self.properties_end = -1
+        self.content = list(())
 
     def read(self):
-        WoodChipperFile.read(self)
-        self._find_frontmatter_tokens()
-        for line in self.text[self.properties_start:self.properties_end]:
+        self.file.read()
+        property_text = self._grab_content_and_frontmatter()
+        for line in property_text:
             if len(line) > 3:
                 self.properties.append(FrontMatterProperty(line))
-
-    def _find_frontmatter_tokens(self, add_if_missing=True):
-        """
-        Finds and records the indices of the start and end frontmatter tokens
-        in the file. These tokens are expected to consist of three quotation
-        marks with nothing else in that line of text.
-        :param add_if_missing: Whether we should add the tokens to the file
-        if they are missing, or just raise an exception.
-        :return: No return value, but will change the properties_start and
-        properties_end
-        """
-        # Grab the indices of lines with the frontmatter token.
-        front_matter_indices = [index for index, line in enumerate(self.text) if S.FM_TOKEN in line]
-        if len(front_matter_indices) < 2:
-            if add_if_missing:
-                self.text.insert(0, S.FM_LINE)
-                self.text.insert(0, S.FM_LINE)
-                front_matter_indices = list((0,1))
+    
+    def _grab_content_and_frontmatter(self):
+        property_text = list(())
+        front_matter_indices = [index for index, line in enumerate(self.file.text) if S.FM_TOKEN in line]
+        if not len(front_matter_indices) == 2:
+            if len(front_matter_indices) == 0:
+                self.content = self.file.text[:]
             else:
-                raise Exception(f"No frontmatter detected in {self.name}")
-        self.properties_start = front_matter_indices[0]+1
-        self.properties_end = front_matter_indices[1]
+                raise Exception(f"Cannot parse {self.file.name}: Abnormal amount of frontmatter tokens.")
+        else:
+            property_text = self.file.text[front_matter_indices[0]+1:front_matter_indices[1]]
+            self.content = self.file.text[front_matter_indices[1]+1:]
+        del self.file.text
+        self.file.text = list(())
+        return property_text
 
 
     def write(self):
-        self.set_properties()
-        WoodChipperFile.write(self)
+        self.file.text = [S.FM_LINE] + self._compile_properties() + [S.FM_LINE] + self.content
+        self.file.write()
+        del self.content
+    
+    def _compile_properties(self):
+        property_list = list(())
+        for property in self.properties:
+            property_list.append(property.as_line())
+        return property_list
 
-    def set_properties(self):
-        # Check if the amount of properties has changed
-        text_property_length = self.properties_end - self.properties_start
-        number_added = len(self.properties) - text_property_length
-        target_index = 0
-        # Save each attribute by either modifying the line or adding one.
-        for index, prop_item in enumerate(self.properties):
-            target_index = index+self.properties_start
-            if index < text_property_length:
-                self.text[target_index] = prop_item.as_line()
-            else:
-                self.text.insert(target_index, prop_item.as_line())
-        # Remove any extraneous lines
-        if number_added < 0:
-            target_index = target_index+1
-            to_be_removed = number_added
-            while to_be_removed != 0:
-                self.text.pop(target_index)
-                to_be_removed = to_be_removed+1
+    def __getitem__(self, item):
+        if type(item) == str:
+            for target_property in self.properties:
+                if target_property.key == item:
+                    return target_property
+            return None
+        elif type(item) == int:
+            if -1 < item < len(self.content):
+                return self.content[item]
+            return None
+        else:
+            raise Exception(f"Cannot interpret the type '{type(item)}' as an index for a frontmatter file.")
 
-        self.properties_end += number_added
-        if self.text[self.properties_end+1].strip() != S.EMPTY:
-            self.text.insert(self.properties_end+1, S.NL)
+    def __setitem__(self, key, value):
+        if type(key) == str:
+            for target_property in self.properties:
+                if target_property.key == key:
+                    target_property.value = value
+        elif type(key) == int:
+            if -1 < key < len(self.content):
+                self.content[key] = value
+        else:
+            raise Exception(f"Cannot interpret the type '{type(key)}' as an index for a frontmatter file.")
 
-    def find_property(self,prop_item):
-        for target_property in self.properties:
-            if target_property.key == prop_item.key:
-                return target_property
-        return None
+    def __delitem__(self, key):
+        if type(key) == str:
+            for target_property in self.properties:
+                if target_property.key == key:
+                    self.properties.remove(target_property)
+                    del target_property
+        elif type(key) == int:
+            if -1 < key < len(self.content):
+                del self.content[key]
+        else:
+            raise Exception(f"Cannot interpret the type '{type(key)}' as an index for a frontmatter file.")
 
-
-    def add_property_if_missing(self, prop_item):
-        target_property = self.find_property(prop_item)
-        if target_property:
-            return False
-        self.properties.append(prop_item)
-        return True
-
-    def set_property_value_or_add(self, prop_item):
-        target_property = self.find_property(prop_item)
-        if target_property:
-            if target_property.value != prop_item.value:
-                target_property.value = prop_item.value
+    def __contains__(self, item):
+        if type(item) == str:
+            for target_property in self.properties:
+                if target_property.key == item:
+                    return True
+        elif type(item) == int:
+            if -1 < item < len(self.content):
                 return True
-            else:
-                return False
-        self.properties.append(prop_item)
-        return True
-
-    def change_property_value_if_exists(self,prop_item):
-        target_property = self.find_property(prop_item)
-        if target_property and target_property.value != prop_item.value:
-            target_property.value = prop_item.value
-            return True
+        else:
+            raise Exception(f"Cannot interpret the type '{type(item)}' as an index for a frontmatter file.")
         return False
 
-    def remove_property(self, prop_item):
-        target_property = self.find_property(prop_item)
-        if target_property:
-            self.properties.remove(target_property)
-            return True
+    def set_property(self, key, value, add_if_necessary=False, change_if_existing=False):
+        if add_if_necessary or change_if_existing:
+            target_property = self[key]
+            found = bool(target_property)
+            if found and change_if_existing:
+                self[key] = value
+                return True
+            elif not found and add_if_necessary:
+                self.properties.append(FrontMatterProperty(key=key, value=value))
+                return True
         return False
 
-    def incorporate_properties(self, other):
-        for other_prop in other.properties:
-            self.add_property_if_missing(other_prop)
+    def remove_property(self, key):
+            for target_property in self.properties:
+                if target_property.key == key:
+                    self.properties.remove(target_property)
+                    return True
+            return False
