@@ -1,8 +1,8 @@
 import pathlib
 
 from utilities import wcutil
-from fmFile import FrontMatterFile
-from fmProperty import FrontMatterProperty
+from fm_file import FrontMatterFile
+from fm_property import FrontMatterProperty
 import constants as S
 class FrontMatterActor:
 

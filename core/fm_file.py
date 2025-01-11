@@ -1,22 +1,22 @@
 from utilities.wcutil import WoodChipperFile
-from fmProperty import FrontMatterProperty
+from fm_property import FrontMatterProperty
 import constants as S
 
 
 class FrontMatterFile(WoodChipperFile):
 
-    def __init__(self, filePath):
-        WoodChipperFile.__init__(self,filePath)
+    def __init__(self, file_path):
+        WoodChipperFile.__init__(self,file_path)
         self.properties = list(())
         self.properties_start = -1
         self.properties_end = -1
 
     def read(self):
         WoodChipperFile.read(self)
-        self.find_properties()
+        self._find_properties()
 
-    def find_properties(self):
-        front_matter_indices = [index for index, line in enumerate(self.text) if S.FM in line]
+    def _find_properties(self):
+        front_matter_indices = [index for index, line in enumerate(self.text) if S.FM_TOKEN in line]
         if len(front_matter_indices) < 2:
             self.text.insert(0, S.FM_LINE)
             self.text.insert(0, S.FM_LINE)

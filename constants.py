@@ -1,4 +1,12 @@
-
+class TOKEN:
+    FRONTMATTER = "---"
+    class LINK:
+        class QUOTED:
+            START = '"[['
+            END = ']]"'
+        class RAW:
+            START = "[["
+            END = "]]"
 
 EMPTY = ""
 NL = "\n"
@@ -6,7 +14,7 @@ COLON = ":"
 FORWARDSLASH = "/"
 BACKSLASH = "\\"
 MD = ".md"
-FM = "---"
+FM_TOKEN = "---"
 FM_LINE = "---\n"
 
 FRAME_PLAIN_ACTION = "{2}: {0} {1}"
