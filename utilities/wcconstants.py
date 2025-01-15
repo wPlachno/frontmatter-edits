@@ -1,8 +1,8 @@
 """
 wcconstants.py
 Created by Will Plachno on 09/07/24
-Version: 0.0.1.011
-Last Changes: 01/03/2025
+Version: 0.0.1.012
+Last Changes: 01/15/2025
 
 Woodchipper Constants
 An assortment of helpful strings and other constants.
@@ -34,31 +34,65 @@ OP = {
 }
 
 class COLOUR:
-    RED='\033[0;31m'
-    GREY='\033[90m'
-    YELLOW='\033[93m'
-    BLUE='\033[94m'
-    DARK_YELLOW='\033[0;33m'
-    GREEN='\033[0;32m'
-    DARK_GREEN='\033[2;32m'
-    PURPLE='\033[0;35m'
-    BLACK='\033[0;30m'
-    WHITE='\033[37m'
+
     DEFAULT='\033[0m'
+
+    BLACK       ='\033[38;5;0m'
+    DARK_RED    ='\033[38;5;1m'
+    DARK_GREEN  ='\033[38;5;2m'
+    DARK_YELLOW ='\033[38;5;3m'
+    DARK_BLUE   ='\033[38;5;4m'
+    DARK_PURPLE ='\033[38;5;5m'
+    DARK_TEAL   ='\033[38;5;6m'
+    DARK_WHITE  ='\033[38;5;7m'
+
+    GREY        ='\033[38;5;8m'
+    RED         ='\033[38;5;9m'
+    GREEN       ='\033[38;5;10m'
+    YELLOW      ='\033[38;5;11m'
+    BLUE        ='\033[38;5;12m'
+    PURPLE      ='\033[38;5;13m'
+    TEAL        ='\033[38;5;14m'
+    WHITE       ='\033[38;5;15m'
+
+class BG:
+
+    DEFAULT='\033[0m'
+
+    BLACK       ='\033[48;5;0m'
+    DARK_RED    ='\033[48;5;1m'
+    DARK_GREEN  ='\033[48;5;2m'
+    DARK_YELLOW ='\033[48;5;3m'
+    DARK_BLUE   ='\033[48;5;4m'
+    DARK_PURPLE ='\033[48;5;5m'
+    DARK_TEAL   ='\033[48;5;6m'
+    DARK_WHITE  ='\033[48;5;7m'
+
+    GREY        ='\033[48;5;8m'
+    RED         ='\033[48;5;9m'
+    GREEN       ='\033[48;5;10m'
+    YELLOW      ='\033[48;5;11m'
+    BLUE        ='\033[48;5;12m'
+    PURPLE      ='\033[48;5;13m'
+    TEAL        ='\033[48;5;14m'
+    WHITE       ='\033[48;5;15m'
 
 class COLOR:
     SUPER=  COLOUR.PURPLE
     SUB=    COLOUR.GREY
     SUBSIB= COLOUR.DARK_GREEN
     SIBLING=COLOUR.DARK_YELLOW
-    OPTION= COLOUR.BLUE
-    QUOTE=  COLOUR.GREEN
+    OPTION= COLOUR.DARK_BLUE
+    QUOTE=  COLOUR.DARK_TEAL
     ACTIVE= COLOUR.GREEN
-    CANCEL= COLOUR.RED
+    CANCEL= COLOUR.DARK_RED
     DEFAULT=COLOUR.DEFAULT
 
-def clr(text, color):
-    return color + text + COLOUR.DEFAULT
+def clr(text, *color):
+    codes=color[0]
+    for code in color[1:]:
+        codes += code
+    return codes + text + COLOUR.DEFAULT
 
 class CL_GENERAL:
     ACTIVE = clr("Active", COLOR.ACTIVE)
