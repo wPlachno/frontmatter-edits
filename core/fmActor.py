@@ -1,7 +1,7 @@
 import pathlib
 
 from utilities import wcutil
-from fm_file import FrontMatterFile
+from fm_file import WoodchipperObsidianFile
 from fm_property import FrontMatterProperty
 import constants as S
 class FrontMatterActor:
@@ -19,7 +19,7 @@ class FrontMatterActor:
         # Get file list
         for file in self.directory_path.iterdir():
             if wcutil.tail_matches_token(file.name, S.MD):
-                self.file_list.append(FrontMatterFile(file.resolve()))
+                self.file_list.append(WoodchipperObsidianFile(file.resolve()))
         # for each file, run action
         for file in self.file_list:
             file.read()

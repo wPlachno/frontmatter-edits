@@ -1,3 +1,10 @@
+# constants.py
+# Created: 8/22/24 by Will Plachno
+# Version: 0.0.2.001
+# Last Changed: 01/15/25
+
+from utilities.wcconstants import clr, COLOUR, OP
+
 class TOKEN:
     FRONTMATTER = "---"
     class LINK:
@@ -7,6 +14,85 @@ class TOKEN:
         class RAW:
             START = "[["
             END = "]]"
+
+class MODE:
+    SHOW = "show"
+    ADD = "add"
+    REMOVE = "remove"
+    SET = "set"
+    CHANGE = "change"
+    SUMMARIZE = "summarize"
+
+class RESPONSE:
+    FILES = "files"
+    HEAT = "heat"
+    class FILE:
+        CURRENT_VALUE = "current_value"
+        PREVIOUS_VALUE = "previous_value"
+        PATH = "path"
+    class SUMMARIZE:
+        TOTAL = "total"
+        KEYS = "keys"
+        PATHS = "paths"
+        class KEY:
+            KEY = "key"
+            FREQUENCY = "frequency"
+            VALUES = "values"
+            class VALUE:
+                VALUE = "value"
+                FREQUENCY = "frequency"
+    class SHOW:
+        KEY = "key"
+        PATHS = "paths"
+        OCCURRENCES = "occurrences"
+        UNIQUE_VALUES = "unique"
+        VALUES = "values"
+        class VALUE:
+            VALUE = "value"
+            FREQUENCY = "frequency"
+            FILES = "files"
+
+class CHANGE:
+    ADDED = "add"
+    SET = "set"
+    REMOVED = "rem"
+    SKIPPED = "skip"
+
+class COLOR:
+    KEY = COLOUR.PURPLE
+    VALUE = COLOUR.YELLOW
+    OLD_VALUE = COLOUR.DARK_YELLOW
+    FREQ = COLOUR.DARK_TEAL
+    PATH = COLOUR.BLUE
+    ADDED = COLOUR.GREEN
+    SET = COLOUR.YELLOW
+    REMOVED = COLOUR.RED
+    SKIPPED = COLOUR.GREY
+
+class OUT:
+    ADDED = f"({clr("ADD", COLOR.ADDED)})"
+    SET = f"({clr("SET", COLOR.SET)})"
+    REMOVED = f"({clr("REM", COLOR.REMOVED)})"
+    SKIPPED = f"({clr("SKIP", COLOR.SKIPPED)})"
+    PATH = f"{clr(OP[0], COLOR.PATH)} - "
+    FULL = f"{PATH} {OP[1]} {clr(OP[2], COLOR.OLD_VALUE)} -> {clr(OP[3], COLOR.VALUE)}"
+    class TOTAL:
+        ADDED = f"{clr("Added", COLOR.ADDED)}: "
+        SET = f"{clr("Set", COLOR.SET)}: "
+        REMOVED = f"{clr("Removed", COLOR.REMOVED)}: "
+        SKIPPED = f"{clr("Skipped", COLOR.SKIPPED)}: "
+        TOTAL = f"{clr("Total Target Files", COLOR.FREQ)}: "
+    class SUMMARIZE:
+        SHORT = f'Property: "{clr(OP[0], COLOR.KEY)}" - Occurrences: {clr(OP[1], COLOR.FREQ)}, Unique Values: {clr(OP[2], COLOR.VALUE)}'
+        VALUE = f'- Value: "{clr(OP[0], COLOR.VALUE)}" - Occurrences: {clr(OP[1], COLOR.FREQ)}'
+        UNIQUE_KEYS = f'Unique Property {clr("keys", COLOR.KEY)}: {clr(OP[0], COLOR.FREQ)}'
+        UNIQUE_VALUES = f'Unique Property {clr("values", COLOR.VALUE)}: {clr(OP[0], COLOR.FREQ)}'
+        TOTAL_PROPERTIES = f'Total Properties: {clr(OP[0], COLOR.FREQ)}'
+    class SHOW:
+        HEADER = f'Property: {clr(OP[0], COLOR.KEY)}\nOccurrences: {clr(OP[1], COLOR.FREQ)}\nValues: {clr(OP[2], COLOR.FREQ)}'
+        VALUE = f'"{clr(OP[0], COLOR.VALUE)}": Occurs in {clr(OP[1], COLOR.FREQ)} files.'
+        PATH = f' - {clr(OP[0], COLOR.PATH)}'
+
 
 EMPTY = ""
 NL = "\n"

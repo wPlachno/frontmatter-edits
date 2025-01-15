@@ -4,11 +4,11 @@
 # Last Changed: 01/11/2025
 
 from utilities.wcutil import WoodChipperFile
-from fm_property import FrontMatterProperty
+from core.fm_property import FrontMatterProperty
 import constants as S
 
 
-class WoodchipperObsidianFile():
+class WoodchipperObsidianFile:
 
     def __init__(self, file_path):
         self.file = WoodChipperFile(file_path)
@@ -25,11 +25,8 @@ class WoodchipperObsidianFile():
     def _grab_content_and_frontmatter(self):
         property_text = list(())
         front_matter_indices = [index for index, line in enumerate(self.file.text) if S.FM_TOKEN in line]
-        if not len(front_matter_indices) == 2:
-            if len(front_matter_indices) == 0:
-                self.content = self.file.text[:]
-            else:
-                raise Exception(f"Cannot parse {self.file.name}: Abnormal amount of frontmatter tokens.")
+        if len(front_matter_indices) == 0:
+            self.content = self.file.text[:]
         else:
             property_text = self.file.text[front_matter_indices[0]+1:front_matter_indices[1]]
             self.content = self.file.text[front_matter_indices[1]+1:]
@@ -45,15 +42,15 @@ class WoodchipperObsidianFile():
     
     def _compile_properties(self):
         property_list = list(())
-        for property in self.properties:
-            property_list.append(property.as_line())
+        for property_item in self.properties:
+            property_list.append(property_item.as_line())
         return property_list
 
     def __getitem__(self, item):
         if type(item) == str:
             for target_property in self.properties:
                 if target_property.key == item:
-                    return target_property
+                    return target_property.value
             return None
         elif type(item) == int:
             if -1 < item < len(self.content):
@@ -103,11 +100,9 @@ class WoodchipperObsidianFile():
             found = bool(target_property)
             if found and change_if_existing:
                 self[key] = value
-                return True
             elif not found and add_if_necessary:
                 self.properties.append(FrontMatterProperty(key=key, value=value))
-                return True
-        return False
+        return self[key]
 
     def remove_property(self, key):
             for target_property in self.properties:

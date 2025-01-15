@@ -1,7 +1,10 @@
 # frontmatter-edits
 A repository of Python scripts for editing the YAML frontmatter in an Obsidian MD vault.
-Version 0.0.1.000
-Written by Will Plachno. 
+
+Created by Will Plachno
+Started on 8/22/24
+Version 0.0.2.001 
+Updated on 01/15/25
 
 ## YAML Frontmatter and Obsidian
 
@@ -15,11 +18,9 @@ This script was originally intended to make that process a little less hair-loss
 
 ## Interface
 
-Frontmatter-edits, or frontmat, was initially designed to use an interactive terminal-based menu system. After initially calling the script, the script would welcome the user, then ask them to select the directory that this call of the script would be interested in. Once the directory is known, the user would enter the main menu.
+Frontmatter-edits, or frontmat, was initially designed to use an interactive terminal-based menu system. After initially calling the script, the script would welcome the user, then ask them to select the directory that this call of the script would be interested in. Once the directory is known, the user would enter the main menu. This interface style has been deprecated (though can still be accessed in the 'menu_style' git branch). 
 
-### Main Menu
-
-The main menu allows the user to select a primary mode - Add, Set, Change, Remove,  or Total, - or to change or clear the target directory. The main menu will continually redisplay until the user chooses to quit. 
+The modern version (starting with version 0.0.2.001) has a pure command-line interface based on the WoodchipperCore system. 
 
 ### The Modes
 
@@ -31,6 +32,34 @@ Frontmat allows for frontmatter attributes to be added, set, changed, or removed
 | Set      | Yes     | Yes      |
 | Change   | No      | Yes      |
 
+Reading the markdown library can happen in two ways: Summarize and Show. Summarize will list the keys of properties found in the frontmatter of the target markdown files. Show will focus in on a specific key, noting the different values and the names of the files that have each.
 
+#### Mode: Summarize
+
+This is the mode that is assumed if no other mode is included in the command-line call. For example, calling `frontmat` alone will display the property information in the markdown files in the current working directory. 
+
+Normally, it will list each Property Key followed by how many times that property is set and how many unique values that property has been set to. At the end of the property list, it will also list the number of unique properties, the number of unique values, and how many properties have been set.
+
+If you increase the verbosity to 3, you'll see the normal WoodchipperCore debug information (Profile, Request, and Response dataa), followed by the markdown files that were checked for this call. Each property will also be followed by the unique values that property was set to and how many times that value is used.
+
+### The Directory Flag
+
+While frontmat is aware of the standard WoodchipperCore flags (config, verbose, debug), it is mainly concerned with the `-directory` flag, which should be followed by a directory path to use as the containing directory for the markdown files we want to affect. 
+
+Without this flag, frontmat assumes the user is interested only in the files in the working directory. This flag allows you to edit frontmatter of markdown files in a different location. 
+
+When combined with target arguments (specific files), the target files are assumed to be in the working directory, not this specified directory. 
+
+## TODO:
+
+- Make target files respect the directory flag, and change the `The Directory Flag` section of this file.
+- Test thoroughly, particularly:
+  - Mode: Show
+  - Mode: Add
+  - Mode: Change
+  - Mode: Set
+  - Mode: Remove
+  - Debug off for all of these.
+- Expand this file to reflect all modes.
 
 
