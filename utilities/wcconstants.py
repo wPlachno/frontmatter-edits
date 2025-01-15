@@ -1,7 +1,7 @@
 """
 wcconstants.py
 Created by Will Plachno on 09/07/24
-Version: 0.0.1.012
+Version: 0.0.1.013
 Last Changes: 01/15/2025
 
 Woodchipper Constants
@@ -78,15 +78,17 @@ class BG:
     WHITE       ='\033[48;5;15m'
 
 class COLOR:
-    SUPER=  COLOUR.PURPLE
-    SUB=    COLOUR.GREY
-    SUBSIB= COLOUR.DARK_GREEN
-    SIBLING=COLOUR.DARK_YELLOW
-    OPTION= COLOUR.DARK_BLUE
-    QUOTE=  COLOUR.DARK_TEAL
-    ACTIVE= COLOUR.GREEN
-    CANCEL= COLOUR.DARK_RED
-    DEFAULT=COLOUR.DEFAULT
+    SUPER       =COLOUR.PURPLE
+    SUB         =COLOUR.GREY
+    SUBSIB      =COLOUR.DARK_GREEN
+    SIBLING     =COLOUR.DARK_YELLOW
+    OPTION      =COLOUR.DARK_BLUE
+    QUOTE       =COLOUR.DARK_TEAL
+    ACTIVE      =COLOUR.GREEN
+    CANCEL      =COLOUR.DARK_RED
+    DEFAULT     =COLOUR.DEFAULT
+    PATH_PARENT =COLOUR.DARK_WHITE
+    PATH_NAME   =COLOUR.DARK_TEAL
 
 def clr(text, *color):
     codes=color[0]

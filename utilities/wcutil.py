@@ -1,8 +1,8 @@
 """
 wcutil.py
 Created by Will Plachno on 11/30/23
-Version: 0.0.1.011
-Last Changes: 01/08/2025
+Version: 0.0.1.013
+Last Changes: 01/15/2025
 
 Woodchipper Utilities
 An assortment of helpful functions and classes.
@@ -49,7 +49,7 @@ Wishlist:
         Filter - Runs a function on each item of a collection,
             creating a new collection of items for which the
             function returns true.
-        Reduce - Returns a sum of the return values of a functin
+        Reduce - Returns a sum of the return values of a function
             run over each item in a collection.
 - -- WoodchipperProfileFile: A WoodchipperSettingsFile specifically
         for user account settings across different programs. Also,
@@ -86,9 +86,11 @@ Wishlist:
 """
 import pathlib
 from datetime import datetime
+from functools import reduce
+from pathlib import PosixPath
 from types import SimpleNamespace
 
-import utilities.wcconstants as S
+import utilities.wcconstants as s
 
 """ CLASSES ------------------------------------------------------ """
 
@@ -210,7 +212,7 @@ class FlagFarm:
         count = 0
         for key in self.keys:
             if self.values[key]:
-                count += count
+                count += 1
 
     def active_flags(self):
         return [key for key in self.keys if self.values[key]]
@@ -227,12 +229,12 @@ class WoodchipperNamespace(SimpleNamespace):
         setattr(self, key, value)
 
     def __str__(self):
-        out_str = S.clr(self._name, S.COLOR.SUPER) + ": { "
+        out_str = s.clr(self._name, s.COLOR.SUPER) + ": { "
         if len(self.__dict__) > 0:
             for key in self.__dict__:
                 if key != "_name":
                     value_str = str(self.__dict__[key]).replace("\n", "\n\t")
-                    out_str += f"\n\t{S.clr(key, S.COLOR.SIBLING)}: {value_str}"
+                    out_str += f"\n\t{s.clr(key, s.COLOR.SIBLING)}: {value_str}"
             out_str += "\n"
         out_str += "}"
         return out_str
@@ -242,6 +244,9 @@ class WoodchipperDictionary:
         self.values = dict()
         self.default = default_value
         self.values["default"] = self.default
+
+    def keys(self):
+        return filter( (lambda key: key != "default"), self.values.keys())
 
     def __getitem__(self, key="default"):
         try:
@@ -256,9 +261,9 @@ class WoodchipperDictionary:
 
     def __iter__(self):
         class WoodchipperDictionaryIterator:
-            def __init__(self, wcdict):
-                self.dict = wcdict
-                self.keys = list(wcdict.values.keys())
+            def __init__(self, woodchipper_dictionary):
+                self.dict = woodchipper_dictionary
+                self.keys = list(woodchipper_dictionary.values.keys())
                 self.length = len(self.keys)
                 self.index = -1
                 self.key = None
@@ -290,6 +295,55 @@ class WoodchipperDictionary:
                 self.key = key
                 self.value = self.dict[self.key]
         return WoodchipperDictionaryIterator(self)
+
+class WoodchipperListDictionary(WoodchipperDictionary):
+    def __init__(self, allow_duplicates=False):
+        WoodchipperDictionary.__init__(self)
+        self.allow_duplicates = allow_duplicates
+
+    def mark(self, key, value):
+        if not key in self.values:
+            self.values[key] = list(()).append(value)
+        elif self.allow_duplicates:
+            self.values[key].append(value)
+
+    def compile(self):
+        return list(map(lambda key: ( key, self.values[key] ), sorted(self.values.keys())))
+
+class WoodchipperHeatMap:
+    def __init__(self):
+        self._heat = WoodchipperDictionary(0)
+
+    def mark(self, key):
+        self._heat[key] = self._heat[key] + 1
+
+    def compile(self):
+        heat_map = list( map( lambda property_key: ( property_key, self._heat[property_key] ), sorted(self._heat.keys())) )
+        total = reduce( lambda first_item, second_item: ("", first_item[1] + second_item[1]), heat_map )[1]
+        return heat_map, total
+
+class WoodchipperHeatMapDictionary:
+    def __init__(self):
+        self._keys = WoodchipperDictionary()
+
+    def mark(self, key, value):
+        if self._keys[key]:
+            self._keys[key].mark(value)
+        else:
+            new_heat = WoodchipperHeatMap()
+            new_heat.mark(value)
+            self._keys[key] = new_heat
+
+    def compile(self):
+        heat = list(())
+        total = 0
+        for key in sorted(self._keys.keys()):
+            key_heat, key_total = self._keys[key].compile()
+            total += key_total
+            heat.append((key, key_total, key_heat))
+        return heat, total
+
+
 
 
 
@@ -342,16 +396,16 @@ class WoodChipperFile:
         self.text = list(())
 
         if auto_create and not self.path.exists():
-            file = open(self.path, S.FILE_IO.EXCLUSIVE_CREATION)
+            file = open(self.path, s.FILE_IO.EXCLUSIVE_CREATION)
             file.close()
 
     def read(self):
-        with (open(self.path, S.FILE_IO.READ)
+        with (open(self.path, s.FILE_IO.READ)
               as text_file):
             self.text = list(text_file)
 
     def write(self):
-        with (open(self.path, S.FILE_IO.WRITE)
+        with (open(self.path, s.FILE_IO.WRITE)
               as text_file):
             for text_line in self.text:
                 text_file.write(text_line)
@@ -366,7 +420,7 @@ class WoodChipperFile:
         return pathlib.Path(self.path).stat().st_mtime if self.exists() else 0
 
     def file_extension(self):
-        return self.path.split('.')[-1]
+        return str(self.path).split('.')[-1]
 
     def copy_from(self, other_file):
         if other_file.text:
@@ -374,21 +428,21 @@ class WoodChipperFile:
 
     def append_line(self, text):
         fixed_text = text
-        if fixed_text[-1] != S.KEY.NL:
-            fixed_text = fixed_text + S.KEY.NL
+        if fixed_text[-1] != s.KEY.NL:
+            fixed_text = fixed_text + s.KEY.NL
         self.text.append(fixed_text)
 
     def insert_line(self, index, text):
         fixed_text = text
-        if fixed_text[-1] != S.KEY.NL:
-            fixed_text = fixed_text + S.KEY.NL
+        if fixed_text[-1] != s.KEY.NL:
+            fixed_text = fixed_text + s.KEY.NL
         self.text.insert(index, fixed_text)
 
     def run_per_line(self, _func):
         return_value = True
         for rawLine in self.text:
             line = rawLine
-            if line[-1] == S.KEY.NL:
+            if line[-1] == s.KEY.NL:
                 line = line[:-1]
             return_value = return_value and _func(line)
         return return_value
@@ -442,30 +496,30 @@ class WoodchipperListFile(WoodChipperFile):
         return self.text[item][:-1]
 
     def __setitem__(self, key, value):
-        self.text[key] = str(value) + S.KEY.NL
+        self.text[key] = str(value) + s.KEY.NL
 
     def  __contains__(self, item):
-        text = str(item)+S.KEY.NL
+        text = str(item) + s.KEY.NL
         return text in self.text
 
     def __len__(self):
         return len(self.text)
 
     def __str__(self):
-        text = S.KEY.EMPTY
+        text = s.KEY.EMPTY
         for line in self.text:
-            text = text + (line[:-1]+S.KEY.CD)
+            text = text + (line[:-1] + s.KEY.CD)
         return text[:-2]
 
     def add(self, value):
-        text = str(value)+S.KEY.NL
+        text = str(value) + s.KEY.NL
         if (not self.unique) or (text not in self.text):
             self.text.append(text)
             return True
         return False
 
     def remove(self, value):
-        text = str(value)+S.KEY.NL
+        text = str(value) + s.KEY.NL
         found = text in self.text
         self.text.remove(text)
         return found
@@ -487,7 +541,7 @@ class WoodchipperDictionaryFile:
     def __init__(self, path="None"):
         self.path = path
         if self.path == "None":
-            self.path = pathlib.Path.home() / S.FILE_NAME_SETTINGS
+            self.path = pathlib.Path.home() / s.FILE_NAME_SETTINGS
         self.file = WoodChipperFile(self.path)
         self.keys = set(())
         self.values = {}
@@ -495,13 +549,13 @@ class WoodchipperDictionaryFile:
     def load(self):
         self.file.read()
         self.file.run_per_line(self._add_from_file)
-        if S.DEBUG not in self.keys:
-            self.set_key(S.DEBUG,S.OFF)
+        if s.DEBUG not in self.keys:
+            self.set_key(s.DEBUG, s.OFF)
 
     def save(self):
         self.file.clear()
         for key in self.keys:
-            self.file.append_line(key+S.KEY.SDL+self.values[key])
+            self.file.append_line(key + s.KEY.SDL + self.values[key])
         self.file.write()
 
 
@@ -531,16 +585,16 @@ class WoodchipperDictionaryFile:
         return self.values[key]
 
     def _add_from_file(self, text):
-        brokenLine = text.split(S.KEY.SDL)
-        _key = brokenLine[0]
-        _val = brokenLine[1]
+        broken_line = text.split(s.KEY.SDL)
+        _key = broken_line[0]
+        _val = broken_line[1]
         self.set_key(_key, _val)
         return True
 
     def is_defined(self, key):
         return key in self.keys
 
-    def get_or_default(self, key, default=S.UNDEFINED):
+    def get_or_default(self, key, default=s.UNDEFINED):
         if self.is_defined(key):
             return self[key]
         else:
@@ -564,11 +618,11 @@ class WoodchipperSettingsFile(WoodchipperDictionaryFile):
         WoodchipperDictionaryFile.__init__(self)
         self.load()
         self._check_variables()
-        self.verbosity = int(self[S.VERBOSE])
+        self.verbosity = int(self[s.VERBOSE])
 
     def _check_variables(self):
         any_missing = False
-        profile_vars = [ (S.VERBOSE, str(S.Verbosity.NORMAL)) ]
+        profile_vars = [(s.VERBOSE, str(s.Verbosity.NORMAL))]
         for var_key, var_val in profile_vars:
             if not var_key in self.keys:
                 any_missing = True
@@ -578,19 +632,19 @@ class WoodchipperSettingsFile(WoodchipperDictionaryFile):
         return any_missing
 
     def get_debug(self):
-        return self[S.DEBUG] == S.ON
+        return self[s.DEBUG] == s.ON
 
     def flip_debug(self, wanted_value=None):
         new_value = wanted_value
-        value_string = self[S.DEBUG]
+        value_string = self[s.DEBUG]
         if wanted_value:
-            value_string = (S.OFF if wanted_value == False else S.ON)
+            value_string = (s.OFF if wanted_value == False else s.ON)
         else:
-            if value_string == S.OFF:
-                value_string = S.ON
+            if value_string == s.OFF:
+                value_string = s.ON
             else:
-                value_string = S.OFF
-        self.set_key(S.DEBUG, value_string, True)
+                value_string = s.OFF
+        self.set_key(s.DEBUG, value_string, True)
         return new_value
 
     def get_verbosity(self):
@@ -598,7 +652,7 @@ class WoodchipperSettingsFile(WoodchipperDictionaryFile):
 
     def set_verbosity(self, wanted_value):
         self.verbosity = wanted_value
-        self[S.VERBOSE] = str(self.verbosity)
+        self[s.VERBOSE] = str(self.verbosity)
 
     def check_parser(self, argparse_args):
         proceed = not argparse_args.config
@@ -609,21 +663,21 @@ class WoodchipperSettingsFile(WoodchipperDictionaryFile):
             if verbosity is not None:
                 self.set_verbosity(verbosity)
             else:
-                out_string = S.CL_TASK.CONFIG_ERROR.format("Verbosity could not be interpreted as an integer value.")
+                out_string = s.CL_TASK.CONFIG_ERROR.format("Verbosity could not be interpreted as an integer value.")
         if not argparse_args.debug is None:
             debug = argparse_args.debug
             self.flip_debug(wanted_value=debug)
         if not argparse_args.test is None:
             test = argparse_args.test
-            # Note: We can test WCUTIL here by checking test, doing the test, and returning the result
-            # Otherwise, we can assume they are testing something outside of WCUTIL
+            # Note: We can test wcutil here by checking test, doing the test, and returning the result
+            # Otherwise, we can assume they are testing something outside wcutil
             proceed = False
         self.save()
         argparse_args.verbosity = self.verbosity
         argparse_args.debug = self.get_debug()
         if not out_string:
-            out_string = S.CL_TASK.MODE_CONFIG.format(S.VERBOSE, argparse_args.verbosity)
-            out_string += S.CL_TASK.MODE_CONFIG.format(S.DEBUG, argparse_args.debug)
+            out_string = s.CL_TASK.MODE_CONFIG.format(s.VERBOSE, argparse_args.verbosity)
+            out_string += s.CL_TASK.MODE_CONFIG.format(s.DEBUG, argparse_args.debug)
         return proceed, out_string, test
 
     @staticmethod
@@ -635,11 +689,11 @@ class WoodchipperSettingsFile(WoodchipperDictionaryFile):
 
     @staticmethod
     def get_test_string(text):
-        if text.startswith(S.TEST_TAG):
-            return text[len(S.TEST_TAG):]
+        if text.startswith(s.TEST_TAG):
+            return text[len(s.TEST_TAG):]
         return None
 
-    def print(self, text, verbosity=S.Verbosity.NORMAL):
+    def print(self, text, verbosity=s.Verbosity.NORMAL):
         if self.get_debug() or self.verbosity >= verbosity:
             print(text)
 
@@ -647,14 +701,28 @@ class WoodchipperSettingsFile(WoodchipperDictionaryFile):
 """ FUNCTIONS ---------------------------------------------------- """
 def bool_from_user(raw_text:str):
     text = raw_text.lower()
-    if text in S.ON_SYNONYMS:
+    if text in s.ON_SYNONYMS:
         return True
     return False
+
+def colorize_path(path):
+    parent = ""
+    name = ""
+    if type(path) == str:
+        pieces = path.split('/')
+        name = pieces[-1]
+        parent = path[:-len(name)]
+    elif type(path) == PosixPath:
+        parent = str(path.parent)
+        name = path.name
+    return f'{s.clr(parent, s.COLOR.PATH_PARENT)}/{s.clr(name, s.COLOR.PATH_NAME)}'
+
+
 
 def convert_to_array(target):
     """
     Takes whatever is passed in and returns it inside
-    of a list, unless it was already a list.
+    a list, unless it was already a list.
     :param target: anything
     :return: target inside a list or target if target is already a list.
     """
@@ -694,7 +762,7 @@ def process_str_array_new_lines(target):
     """
     new_lines = list(())
     for _string in target:
-        for line in _string.split(S.KEY.NL):
+        for line in _string.split(s.KEY.NL):
             if len(line) > 0:
                 new_lines.append(line)
     return new_lines
@@ -713,9 +781,9 @@ def run_on_sorted_list(target_list, function_given_item):
 
 
 def string_from_bool(value:bool, include_color:bool=False):
-    pretext = S.COLOR.ACTIVE if value else S.COLOR.CANCEL
-    text = S.ON if value else S.OFF
-    return pretext+text+S.COLOR.DEFAULT if include_color else text
+    pretext = s.COLOR.ACTIVE if value else s.COLOR.CANCEL
+    text = s.ON if value else s.OFF
+    return pretext + text + s.COLOR.DEFAULT if include_color else text
 
 
 def tail_matches_token(text, token):
@@ -732,11 +800,11 @@ def text_has_paths(text):
     """
     has_paths = False
     try:
-        text.index(S.KEY.FS)
+        text.index(s.KEY.FS)
         has_paths = True
     finally:
         try:
-            text.index(S.KEY.BS)
+            text.index(s.KEY.BS)
             has_paths = True
         finally:
             return has_paths
@@ -748,9 +816,9 @@ def time_stamp(time=None):
     :return: 12/24/23:7:42:22 = 12/24 of 2023 at 7:42 and 22 seconds,
     but the current time.
     """
-    if time:
-        return datetime(time).strftime(S.PREFERRED_TIME_FORMAT)
-    return datetime.now().strftime(S.PREFERRED_TIME_FORMAT)
+    if time and type(time) == datetime:
+        return time.strftime(s.PREFERRED_TIME_FORMAT)
+    return datetime.now().strftime(s.PREFERRED_TIME_FORMAT)
 
 
 def valid_directory_at(directory_path):
@@ -762,6 +830,6 @@ def valid_directory_at(directory_path):
     try:
         if directory_path and pathlib.Path(directory_path).is_dir():
             return True
-    except Exception:
+    except PermissionError:
         return False
     return False
