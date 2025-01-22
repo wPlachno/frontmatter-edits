@@ -140,7 +140,7 @@ class FrontMatterHandlerShow(WCHandler):
     def _compile_value_item(self, value_item):
         value = value_item[0]
         file_list = value_item[1]
-        value_frequency = len(file_list)
+        value_frequency = len(file_list) if file_list else 0
         value_ns = self.compile_value_description(self.key, value, value_frequency, file_list)
         return value_ns
 
