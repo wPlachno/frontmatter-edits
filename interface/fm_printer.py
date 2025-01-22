@@ -1,7 +1,7 @@
 # fm_printer.py
 # Written By: Will Plachno
 # Created: 01/11/2025
-# Version: 0.0.1.004
+# Version: 0.0.1.005
 # Last Changed: 01/22/2025
 
 from utilities.wcmodeprinter import WoodchipperCoreModePrinter as WCPrinter
@@ -19,6 +19,7 @@ class FrontMatterPrinterDefault(WCPrinter):
         if WCPrinter.print(self):
             for file in self.file_list:
                 self.describe_file_change(file)
+            self.printer.nl(verbosity=Verbosity.DEBUG)
             heat_map, total = self.heat.compile()
             self.printer.pr(OUT.TOTAL.TOTAL + str(total))
             for heat_item in heat_map:
