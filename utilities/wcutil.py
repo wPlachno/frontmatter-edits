@@ -1,8 +1,8 @@
 """
 wcutil.py
 Created by Will Plachno on 11/30/23
-Version: 0.0.1.014
-Last Changes: 01/20/2025
+Version: 0.0.1.015
+Last Changes: 01/22/2025
 
 Woodchipper Utilities
 An assortment of helpful functions and classes.
@@ -303,12 +303,14 @@ class WoodchipperListDictionary(WoodchipperDictionary):
 
     def mark(self, key, value):
         if not key in self.values:
-            self.values[key] = list(()).append(value)
-        elif self.allow_duplicates:
+            self.values[key] = list(())
+        if value not in self.values[key] or self.allow_duplicates:
             self.values[key].append(value)
 
     def compile(self):
-        return list(map(lambda key: ( key, self.values[key] ), sorted(self.values.keys())))
+        filtered_iterator = filter(lambda key: not key == "default", sorted(self.values.keys()))
+        mapped_iterator = map(lambda key: ( key, self.values[key] ), filtered_iterator)
+        return list(mapped_iterator)
 
 class WoodchipperHeatMap:
     def __init__(self):
