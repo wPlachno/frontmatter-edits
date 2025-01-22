@@ -1,6 +1,6 @@
 # fm_handler.py
 # Created: 01/11/2025
-# Version: 0.0.1.002
+# Version: 0.0.1.003
 # Last Changed: 01/22/2025
 
 from utilities.wcmodehandler import WoodchipperCoreModeHandler as WCHandler
@@ -37,7 +37,7 @@ class FrontMatterHandlerDefault(WCHandler):
 
     def compile_file(self, target_file: WCObsidianFile, previous_value, current_value):
         file_ns = WCNamespace(target_file.file.name)
-        file_ns.add(RESPONSE.FILE.PATH, file_ns.file.path)
+        file_ns.add(RESPONSE.FILE.PATH, target_file.file.path)
         file_ns.add(RESPONSE.FILE.PREVIOUS_VALUE, previous_value)
         file_ns.add(RESPONSE.FILE.CURRENT_VALUE, current_value)
         if not self.debug:
