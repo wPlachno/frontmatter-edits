@@ -1,8 +1,8 @@
 # fm_printer.py
 # Written By: Will Plachno
 # Created: 01/11/2025
-# Version: 0.0.1.001
-# Last Changed: 01/15/2025
+# Version: 0.0.1.002
+# Last Changed: 01/22/2025
 
 from utilities.wcmodeprinter import WoodchipperCoreModePrinter as WCPrinter
 from utilities.wcconstants import Verbosity, clr, COLOR
@@ -108,7 +108,6 @@ class FrontMatterPrinterShow(FrontMatterPrinterTargeted):
         # - [FILE]
         if FrontMatterPrinterTargeted.print(self):
             # values: [{value, frequency, files: list}]
-            self.printer.pr(OUT.SHOW.HEADER.format(self.key, self.occurrences, self.amt_unique_values))
             for value_item in self.values:
                 value = value_item.value
                 frequency = value_item.frequency
@@ -116,4 +115,5 @@ class FrontMatterPrinterShow(FrontMatterPrinterTargeted):
                 self.printer.pr(OUT.SHOW.VALUE.format(value, frequency))
                 for file in files:
                     self.printer.pr(OUT.SHOW.PATH.format(PATH(file)))
+            self.printer.pr(OUT.SHOW.HEADER.format(self.key, self.occurrences, self.amt_unique_values))
 
