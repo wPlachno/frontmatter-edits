@@ -3,8 +3,8 @@ A repository of Python scripts for editing the YAML frontmatter in an Obsidian M
 
 Created by Will Plachno
 Started on 8/22/24
-Version 0.0.2.001 
-Updated on 01/15/25
+Version 0.0.2.002
+Updated on 01/22/25
 
 ## YAML Frontmatter and Obsidian
 
@@ -42,6 +42,20 @@ Normally, it will list each Property Key followed by how many times that propert
 
 If you increase the verbosity to 3, you'll see the normal WoodchipperCore debug information (Profile, Request, and Response dataa), followed by the markdown files that were checked for this call. Each property will also be followed by the unique values that property was set to and how many times that value is used.
 
+#### Mode: Show
+
+To get more details about a specific property, the user can operate with the mode Show. The user will supply a specific property key, and the script will print out each value assigned to that key, which files that value exists in, then summarize the key with the number of files the property exists in and how many unique values appear. 
+
+The mode output does not change between verbosity 2 and 3. 
+
+If the key does not appear in the target files, the script will print out the key with 0 occurrences and 0 values. 
+
+#### Mode: Add
+
+The first of the property editor modes, add will add the key with the given value as a property if and only if the property does not already exist in the markdown file. 
+
+Currently, running this mode in verbosity 2 (Normal) will print out the summary: how many target files existed, how many had the property added, and how many target files were skipped because they already had the property defined. Running in verbosity 3 (debug) will also print out each target file, its previous value attached to the key, its new value attached to the key, and whether the value appeared to be added or skipped. 
+
 ### The Directory Flag
 
 While frontmat is aware of the standard WoodchipperCore flags (config, verbose, debug), it is mainly concerned with the `-directory` flag, which should be followed by a directory path to use as the containing directory for the markdown files we want to affect. 
@@ -61,5 +75,6 @@ When combined with target arguments (specific files), the target files are assum
   - Mode: Remove
   - Debug off for all of these.
 - Expand this file to reflect all modes.
+- Add mode: Replace, allowing the user to input a key, an existing value, and a new value that all occurrences of the key with the existing value should be changed to.
 
 
