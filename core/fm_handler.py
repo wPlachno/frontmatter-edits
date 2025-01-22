@@ -1,7 +1,7 @@
 # fm_handler.py
 # Created: 01/11/2025
-# Version: 0.0.1.001
-# Last Changed: 01/15/2025
+# Version: 0.0.1.002
+# Last Changed: 01/22/2025
 
 from utilities.wcmodehandler import WoodchipperCoreModeHandler as WCHandler
 from utilities.wcutil import WoodchipperNamespace as WCNamespace, WoodchipperHeatMapDictionary as WCHeatDict, \
