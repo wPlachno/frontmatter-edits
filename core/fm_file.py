@@ -1,7 +1,7 @@
 # fm_file.py
 # Created: 8/22/24 by Will Plachno
-# Version: 0.0.2.001
-# Last Changed: 01/11/2025
+# Version: 0.0.2.002
+# Last Changed: 01/22/2025
 
 from utilities.wcutil import WoodChipperFile
 from core.fm_property import FrontMatterProperty
@@ -29,13 +29,15 @@ class WoodchipperObsidianFile:
             self.content = self.file.text[:]
         else:
             property_text = self.file.text[front_matter_indices[0]+1:front_matter_indices[1]]
-            self.content = self.file.text[front_matter_indices[1]+1:]
+            self.content = self.file.text[(front_matter_indices[1]+1):]
         del self.file.text
         self.file.text = list(())
         return property_text
 
 
     def write(self):
+        if not self.content:
+            self.content = list(())
         self.file.text = [S.FM_LINE] + self._compile_properties() + [S.FM_LINE] + self.content
         self.file.write()
         del self.content
