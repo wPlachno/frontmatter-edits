@@ -1,8 +1,8 @@
 """
 wcconstants.py
 Created by Will Plachno on 09/07/24
-Version: 0.0.1.013
-Last Changes: 01/15/2025
+Version: 0.0.1.014
+Last Changes: 01/20/2025
 
 Woodchipper Constants
 An assortment of helpful strings and other constants.
@@ -132,7 +132,7 @@ TEST_TAG = "test: "
 
 ON_SYNONYMS = list(("on", "true", "1", "yes",
                    "t", "y", "+", "active",
-                   "positive", "a", "p"))
+                   "positive", "a", "p", "enable"))
 
 class Verbosity:
     SILENT = 0 # As little output as possible.

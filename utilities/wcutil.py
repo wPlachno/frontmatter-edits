@@ -1,8 +1,8 @@
 """
 wcutil.py
 Created by Will Plachno on 11/30/23
-Version: 0.0.1.013
-Last Changes: 01/15/2025
+Version: 0.0.1.014
+Last Changes: 01/20/2025
 
 Woodchipper Utilities
 An assortment of helpful functions and classes.
@@ -700,12 +700,30 @@ class WoodchipperSettingsFile(WoodchipperDictionaryFile):
 
 """ FUNCTIONS ---------------------------------------------------- """
 def bool_from_user(raw_text:str):
-    text = raw_text.lower()
+    """
+    Given a string, checks to see if it could be deciphered as a boolean.
+    Generally, it checks the text against a simple list of 'true' synonyms.
+    These include the obvious, true/false, as well as some less obvoius -
+    yes/no, on/off, enable/disable.
+    :param raw_text: A string, hopefully one word.
+    :return:
+    """
+    text = raw_text.lower().split()
     if text in s.ON_SYNONYMS:
         return True
     return False
 
 def colorize_path(path):
+    """
+    Given a path, either as a string or as a PosixPath, returns a version
+    of the path as a string, including terminal escape codes for colorizing
+    the path, with the name in a different color. These colors are constants
+    in the 'wcconstants' file
+    :param path: A path, either as a PosixPath or as a string
+    :return: A string representing the path with the parent portion of the
+    path colored according to wcconstants.COLOR.PATH_PARENT, and the name of
+    the file colored according to wcconstants.COLOR.PATH_NAME.
+    """
     parent = ""
     name = ""
     if type(path) == str:
