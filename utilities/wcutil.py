@@ -1,7 +1,7 @@
 """
 wcutil.py
 Created by Will Plachno on 11/30/23
-Version: 0.0.1.015
+Version: 0.0.1.016
 Last Changes: 01/22/2025
 
 Woodchipper Utilities
@@ -710,7 +710,7 @@ def bool_from_user(raw_text:str):
     :param raw_text: A string, hopefully one word.
     :return:
     """
-    text = raw_text.lower().split()
+    text = raw_text.lower().strip().split()[0]
     if text in s.ON_SYNONYMS:
         return True
     return False
