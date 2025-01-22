@@ -1,7 +1,7 @@
 # fm_printer.py
 # Written By: Will Plachno
 # Created: 01/11/2025
-# Version: 0.0.1.002
+# Version: 0.0.1.003
 # Last Changed: 01/22/2025
 
 from utilities.wcmodeprinter import WoodchipperCoreModePrinter as WCPrinter
@@ -115,5 +115,6 @@ class FrontMatterPrinterShow(FrontMatterPrinterTargeted):
                 self.printer.pr(OUT.SHOW.VALUE.format(value, frequency))
                 for file in files:
                     self.printer.pr(OUT.SHOW.PATH.format(PATH(file)))
+            self.printer.nl()
             self.printer.pr(OUT.SHOW.HEADER.format(self.key, self.occurrences, self.amt_unique_values))
 
