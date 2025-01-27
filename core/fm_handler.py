@@ -1,7 +1,7 @@
 # fm_handler.py
 # Created: 01/11/2025
-# Version: 0.0.1.003
-# Last Changed: 01/22/2025
+# Version: 0.0.1.004
+# Last Changed: 01/27/2025
 
 from utilities.wcmodehandler import WoodchipperCoreModeHandler as WCHandler
 from utilities.wcutil import WoodchipperNamespace as WCNamespace, WoodchipperHeatMapDictionary as WCHeatDict, \
@@ -15,6 +15,7 @@ class FrontMatterHandlerDefault(WCHandler):
         WCHandler.__init__(self, request, response)
         self.key = self.request.key
         self.value = self.request.value
+        self.filter = self.request.filter_property
         self.target_paths = self.request.target_paths
         self.add_if_necessary = self.request.add_if_necessary
         self.change_if_existing = self.request.change_if_existing
@@ -31,15 +32,19 @@ class FrontMatterHandlerDefault(WCHandler):
 
     def handle_file(self, target_file: WCObsidianFile):
         previous_value = target_file[self.key]
-        current_value = target_file.set_property(self.key, self.value, self.add_if_necessary, self.change_if_existing)
-        file_ns = self.compile_file(target_file, previous_value, current_value)
+        current_value = previous_value
+        filter_match = self.matches_filter(target_file)
+        if filter_match:
+            current_value = target_file.set_property(self.key, self.value, self.add_if_necessary, self.change_if_existing)
+        file_ns = self.compile_file(target_file, previous_value, current_value, filter_match)
         return file_ns
 
-    def compile_file(self, target_file: WCObsidianFile, previous_value, current_value):
+    def compile_file(self, target_file: WCObsidianFile, previous_value, current_value, filter_match: bool):
         file_ns = WCNamespace(target_file.file.name)
         file_ns.add(RESPONSE.FILE.PATH, target_file.file.path)
         file_ns.add(RESPONSE.FILE.PREVIOUS_VALUE, previous_value)
         file_ns.add(RESPONSE.FILE.CURRENT_VALUE, current_value)
+        file_ns.add(RESPONSE.FILE.PASSED_FILTER, filter_match)
         if not self.debug:
             target_file.write()
         return file_ns
@@ -49,12 +54,19 @@ class FrontMatterHandlerDefault(WCHandler):
         if success:
             self.log_success()
 
+    def matches_filter(self, file):
+        if self.filter:
+            target_value = file[self.filter[0]]
+            return target_value == self.filter[1]
+        return True
+
 class FrontMatterHandlerRemove(FrontMatterHandlerDefault):
     def handle_file(self, target_file):
         removed_value = target_file[self.key]
-        if removed_value:
+        filter_match = self.matches_filter(target_file)
+        if removed_value and filter_match:
             del target_file[self.key]
-        file_ns = self.compile_file(target_file, removed_value, target_file[self.key])
+        file_ns = self.compile_file(target_file, removed_value, target_file[self.key], filter_match)
         return file_ns
 
 class FrontMatterHandlerSummarize(WCHandler):
