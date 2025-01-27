@@ -3,7 +3,7 @@ A repository of Python scripts for editing the YAML frontmatter in an Obsidian M
 
 Created by Will Plachno
 Started on 8/22/24
-Version 0.0.2.003
+Version 0.0.2.004
 Updated on 01/27/25
 
 ## YAML Frontmatter and Obsidian
@@ -56,6 +56,10 @@ The first of the property editor modes, add will add the key with the given valu
 
 Currently, running this mode in verbosity 2 (Normal) will print out the summary: how many target files existed, how many had the property added, and how many target files were skipped because they already had the property defined. Running in verbosity 3 (debug) will also print out each target file, its previous value attached to the key, its new value attached to the key, and whether the value appeared to be added or skipped. 
 
+#### Mode: Remove
+
+This mode will completely remove a property from every target file. If a filter flag is included, properties will only be removed if the value of the property matches the target filter value.
+
 ### The Directory Flag
 
 While frontmat is aware of the standard WoodchipperCore flags (config, verbose, debug), it is mainly concerned with the `-directory` flag, which should be followed by a directory path to use as the containing directory for the markdown files we want to affect. 
@@ -63,6 +67,12 @@ While frontmat is aware of the standard WoodchipperCore flags (config, verbose, 
 Without this flag, frontmat assumes the user is interested only in the files in the working directory. This flag allows you to edit frontmatter of markdown files in a different location. 
 
 When combined with target arguments (specific files), the target files act as a filter of the files in the correct directory. 
+
+### The Filter Flag
+
+This flag can further filter functionality based on the previous value of a property. For example, `frontmat set genre indie -f "artist:Bright Eyes"` will set the `genre` property to the value `indie` for all files where the `artist` property is already set to `Bright Eyes`. 
+
+The argument passed after the `-f` flag should conform to the format "[property_key]:[property_value]", including the quotation marks. the property value must match the filter value exactly for the functionality to be performed - there is currently no support for other comparisons. Only one property filter is allowed per script-use. 
 
 ## TODO:
 
@@ -74,6 +84,5 @@ When combined with target arguments (specific files), the target files act as a 
   - Mode: Remove
   - Debug off for all of these.
 - Expand this file to reflect all modes.
-- Add mode: Replace, allowing the user to input a key, an existing value, and a new value that all occurrences of the key with the existing value should be changed to.
 
 
