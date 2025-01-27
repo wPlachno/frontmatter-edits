@@ -1,7 +1,7 @@
 # constants.py
 # Created: 8/22/24 by Will Plachno
-# Version: 0.0.2.001
-# Last Changed: 01/15/25
+# Version: 0.0.2.002
+# Last Changed: 01/27/25
 
 from utilities.wcconstants import clr, COLOUR, OP
 
@@ -30,6 +30,7 @@ class RESPONSE:
         CURRENT_VALUE = "current_value"
         PREVIOUS_VALUE = "previous_value"
         PATH = "path"
+        PASSED_FILTER = "filter_pass"
     class SUMMARIZE:
         TOTAL = "total"
         KEYS = "keys"
