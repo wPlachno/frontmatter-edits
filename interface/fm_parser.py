@@ -1,7 +1,7 @@
 # fm_parser.py
 # Written by: Will Plachno
 # Created: 01/11/2025
-# Version: 0.0.1.003
+# Version: 0.0.1.004
 # Last Changed: 01/27/2025
 
 from os import getcwd
@@ -31,6 +31,7 @@ def build_parser():
 def post_parser(request):
     target_paths = determine_target_paths(request)
     add_if_necessary, change_if_existing = determine_set_type(request)
+    setattr(request, "filter_property", translate_filter(request.filter))
     setattr(request, "target_paths", target_paths)
     setattr(request, "add_if_necessary", add_if_necessary)
     setattr(request, "change_if_existing", change_if_existing)
@@ -69,6 +70,13 @@ def determine_set_type(request):
         add_if_necessary = True
         change_if_existing = True
     return add_if_necessary, change_if_existing
+
+def translate_filter(filter_string):
+    pieces = filter_string.split(':')
+    key = pieces[0]
+    value = pieces[1]
+    return key, value
+
 
 def path_shaper(text):
     return Path(text).resolve()
