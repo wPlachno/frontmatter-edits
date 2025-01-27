@@ -1,8 +1,8 @@
 # fm_parser.py
 # Written by: Will Plachno
 # Created: 01/11/2025
-# Version: 0.0.1.001
-# Last Changed: 01/12/2025
+# Version: 0.0.1.002
+# Last Changed: 01/27/2025
 
 from os import getcwd
 from pathlib import Path
@@ -29,22 +29,31 @@ def build_parser():
 def post_parser(request):
     target_paths = determine_target_paths(request)
     add_if_necessary, change_if_existing = determine_set_type(request)
-    setattr(request, "target_paths", determine_target_paths(request))
+    setattr(request, "target_paths", target_paths)
     setattr(request, "add_if_necessary", add_if_necessary)
     setattr(request, "change_if_existing", change_if_existing)
     return request
 
 def determine_target_paths(request):
+
+    # check Directory validity and get file paths
     root = Path(request.directory)
     if not root.is_dir():
         print(f"The path {root.resolve()} did not resolve to a directory.")
         exit(1)
     md_files = filter(lambda x: markdown_check(x.name), root.iterdir())
     target_paths = list(map(path_shaper, md_files))
-    if len(request.targets) > 0:
-        target_paths = list(())
-        for target in request.targets:
-            target_paths.append(markdown_path_shaper(target))
+
+    # compile and institute targets
+    targets = list(())
+    if request.key and request.mode == MODE.SUMMARIZE:
+        targets.append(request.key)
+    if request.value and (request.mode == MODE.SUMMARIZE or request.mode == MODE.SHOW):
+        targets.append(request.value)
+    targets.extend(request.targets)
+    if len(targets) > 0:
+        target_paths = list(filter((lambda dir_path: dir_path.name in targets), target_paths))
+
     return target_paths
 
 def determine_set_type(request):
