@@ -1,7 +1,7 @@
 # fm_parser.py
 # Written by: Will Plachno
 # Created: 01/11/2025
-# Version: 0.0.1.002
+# Version: 0.0.1.003
 # Last Changed: 01/27/2025
 
 from os import getcwd
@@ -24,6 +24,8 @@ def build_parser():
                         description="A set of filenames that exist in the given directory that should be the only files considered 'targets'.")
     parser.add_argument("--directory", "-directory", "-d", "-dir", default=getcwd(), shaper=path_shaper, nargs=1,
                         description="A path to a directory that should be used for this script call.")
+    parser.add_argument("--filter", "-filter", "-f", nargs=1,
+                        description="Filters the Set, Update, and Remove modes for instances of the property with the given value.")
     return parser
 
 def post_parser(request):
