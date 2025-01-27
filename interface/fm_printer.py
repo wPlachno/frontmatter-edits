@@ -1,8 +1,8 @@
 # fm_printer.py
 # Written By: Will Plachno
 # Created: 01/11/2025
-# Version: 0.0.1.005
-# Last Changed: 01/22/2025
+# Version: 0.0.1.006
+# Last Changed: 01/26/2025
 
 from utilities.wcmodeprinter import WoodchipperCoreModePrinter as WCPrinter
 from utilities.wcconstants import Verbosity, clr, COLOR
@@ -34,7 +34,7 @@ class FrontMatterPrinterDefault(WCPrinter):
             change_type = CHANGE.ADDED
         elif not file.current_value:
             change_type = CHANGE.REMOVED
-        elif file.previous_value == file.current_value:
+        if file.previous_value == file.current_value:
             change_type = CHANGE.SKIPPED
         self.heat.mark(change_type)
         change_desc = self.translate_change(change_type, OUT)
