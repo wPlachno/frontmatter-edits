@@ -3,8 +3,8 @@ A repository of Python scripts for editing the YAML frontmatter in an Obsidian M
 
 Created by Will Plachno
 Started on 8/22/24
-Version 0.0.2.002
-Updated on 01/22/25
+Version 0.0.2.003
+Updated on 01/27/25
 
 ## YAML Frontmatter and Obsidian
 
@@ -62,11 +62,10 @@ While frontmat is aware of the standard WoodchipperCore flags (config, verbose, 
 
 Without this flag, frontmat assumes the user is interested only in the files in the working directory. This flag allows you to edit frontmatter of markdown files in a different location. 
 
-When combined with target arguments (specific files), the target files are assumed to be in the working directory, not this specified directory. 
+When combined with target arguments (specific files), the target files act as a filter of the files in the correct directory. 
 
 ## TODO:
 
-- Make target files respect the directory flag, and change the `The Directory Flag` section of this file.
 - Test thoroughly, particularly:
   - Mode: Show
   - Mode: Add
