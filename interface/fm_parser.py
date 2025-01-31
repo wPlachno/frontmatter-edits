@@ -1,8 +1,8 @@
 # fm_parser.py
 # Written by: Will Plachno
 # Created: 01/11/2025
-# Version: 0.0.1.005
-# Last Changed: 01/27/2025
+# Version: 0.0.1.006
+# Last Changed: 01/30/2025
 
 from os import getcwd
 from pathlib import Path
@@ -72,10 +72,12 @@ def determine_set_type(request):
     return add_if_necessary, change_if_existing
 
 def translate_filter(filter_string):
-    pieces = filter_string.split(':')
-    key = pieces[0]
-    value = pieces[1]
-    return key, value
+    if filter_string:
+        pieces = filter_string.split(':')
+        key = pieces[0]
+        value = pieces[1]
+        return key, value
+    return None
 
 
 def path_shaper(text):
